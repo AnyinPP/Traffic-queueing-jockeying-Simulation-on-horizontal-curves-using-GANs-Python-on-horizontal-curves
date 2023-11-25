@@ -1,0 +1,118 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from statistics import mean
+
+# Define hyperparameters
+latent_dim = 10
+data_dim = 1
+epochs = 7000
+#batch_size = 64
+
+# Create a generator model
+def build_generator(latent_dim, output_dim):
+    input_layer = Input(shape=(latent_dim,))
+    x = Dense(32, activation='relu')(input_layer)
+    x = Dense(output_dim, activation='linear')(x)
+    generator = Model(input_layer, x)
+    return generator
+
+# Create a discriminator model
+def build_discriminator(input_dim):
+    input_layer = Input(shape=(input_dim,))
+    x = Dense(32, activation='relu')(input_layer)
+    x = Dense(1, activation='sigmoid')(x)
+    discriminator = Model(input_layer, x)
+    return discriminator
+
+# Combine the generator and discriminator into a GAN
+def build_gan(generator, discriminator):
+    discriminator.trainable = False
+    gan_input = Input(shape=(latent_dim,))
+    x = generator(gan_input)
+    gan_output = discriminator(x)
+    gan = Model(gan_input, gan_output)
+    return gan
+
+
+
+
+
+# Constants
+Arrival = [423, 409, 568, 619, 812, 963, 1198, 1071, 1623, 1168, 1660, 1699, 1224, 1227, 1068, 973, 934, 888, 821, 725, 621, 642, 512, 443, 476, 521, 314, 221, 312, 605, 614, 621, 616, 612, 631, 622, 601, 531, 589, 531, 598, 593, 468, 417, 403, 370, 352, 365, 334, 362, 336, 349, 363, 193, 231, 205, 200, 209, 204, 201, 207, 203, 381, 436, 421, 608, 582, 623, 521, 436, 364, 391]
+Departure = [423, 409, 568, 598, 591, 601, 589, 598, 597, 595, 597, 622, 611, 589, 602, 590, 569, 589, 598, 589, 599, 597, 595, 597, 596, 598, 596, 597, 598, 603, 605, 590, 596, 598, 597, 599, 599, 589, 579, 597, 596, 635, 623, 593, 598, 592, 542, 594, 584, 593, 596, 592, 598, 596, 598, 595, 595, 598, 598, 453, 321, 203, 381, 436, 421, 608, 582, 623, 521, 436, 364, 391]
+#x_shape = len(Arrival)
+#x = 10*np.ones(shape=x_shape)
+y = np.arange(0, 720, 10)
+Epsilon = 1e-1
+
+Service_time = []
+for h in range(len(Arrival)):
+    Service_time.append(Arrival[h]-Departure[h])
+
+Service1_rate = []
+for g in range(len(Service_time)):
+    Service1_rate.append(1/(Service_time[g] + Epsilon))
+
+
+Inter_arrival_rate = []
+for j in range(len(Arrival)):
+    Inter_arrival_rate.append(12*3600 / Arrival[j])
+
+
+Service_rate = []
+for i in range(len(Departure)):
+    Service_rate.append(12*3600 / Departure[i])
+
+# Queue Length
+Queue_length1 = []
+for m in range(len(Inter_arrival_rate)):
+    Queue_length1.append(Inter_arrival_rate[m]/Service1_rate[m])
+
+
+
+
+
+
+# Build and compile the models
+generator = build_generator(latent_dim, data_dim)
+discriminator = build_discriminator(data_dim)
+gan = build_gan(generator, discriminator)
+
+discriminator.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate=0.0001))
+gan.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate=0.0001))
+
+s = mean(Queue_length1)
+siz = s + 10240
+size = int(siz)    
+
+# Generate synthetic data using GAN
+for epoch in range(epochs):
+    # Generate random noise samples
+    noise = np.random.normal(0, 1, (size, latent_dim))
+
+    # Generate synthetic data using the generator
+    generated_data = generator.predict(noise)
+
+    # Sample real data (you would replace this with your actual queueing data)
+    #real_data = np.cov(Queue_length1(float), rowvar=False)
+    real_data = np.random.randn(size, data_dim)
+
+    # Train the discriminator
+    discriminator_loss_real = discriminator.train_on_batch(real_data, np.ones((size, 1)))
+    discriminator_loss_generated = discriminator.train_on_batch(generated_data, np.zeros((size, 1)))
+    discriminator_loss = 0.5 * np.add(discriminator_loss_real, discriminator_loss_generated)
+
+    # Train the generator (via the GAN)
+    noise = np.random.normal(0, 1, (size, latent_dim))
+    generator_loss = gan.train_on_batch(noise, np.ones((size, 1)))
+
+    if epoch % 100 == 0:
+        print(f"Epoch: {epoch}, Discriminator Loss: {discriminator_loss}, Generator Loss: {generator_loss}")
+
+    if epoch % 1000 == 0:
+        # Optionally, you can visualize the generated data
+        plt.hist(generated_data, bins=30, range=(0, 1))
+        plt.show()
