@@ -1,0 +1,97 @@
+import matplotlib.pyplot as plt
+import random
+import numpy as np
+
+
+
+# Constants
+Arrival = [423, 409, 568, 619, 812, 963, 1198, 1071, 1623, 1168, 1660, 1699, 1224, 1227, 1068, 973, 934, 888, 821, 725, 621, 642, 512, 443, 476, 521, 314, 221, 312, 605, 614, 621, 616, 612, 631, 622, 601, 531, 589, 531, 598, 593, 468, 417, 403, 370, 352, 365, 334, 362, 336, 349, 363, 193, 231, 205, 200, 209, 204, 201, 207, 203, 381, 436, 421, 608, 582, 623, 521, 436, 364, 391]
+Departure = [423, 409, 568, 598, 591, 601, 589, 598, 597, 595, 597, 622, 611, 589, 602, 590, 569, 589, 598, 589, 599, 597, 595, 597, 596, 598, 596, 597, 598, 603, 605, 590, 596, 598, 597, 599, 599, 589, 579, 597, 596, 635, 623, 593, 598, 592, 542, 594, 584, 593, 596, 592, 598, 596, 598, 595, 595, 598, 598, 453, 321, 203, 381, 436, 421, 608, 582, 623, 521, 436, 364, 391]
+#x_shape = len(Arrival)
+#x = 10*np.ones(shape=x_shape)
+y = np.arange(0, 720, 10)
+Epsilon = 1e-1
+
+Service_time = []
+for h in range(len(Arrival)):
+    Service_time.append(Arrival[h]-Departure[h])
+
+Service1_rate = []
+for g in range(len(Service_time)):
+    Service1_rate.append(1/(Service_time[g] + Epsilon))
+
+
+ # y = [y for y in range(len(Utilization))]
+#y = 10 + np.random.randn(70)
+
+Inter_arrival_rate = []
+for j in range(len(Arrival)):
+    Inter_arrival_rate.append(12*3600 / Arrival[j])
+
+
+Service_rate = []
+for i in range(len(Departure)):
+    Service_rate.append(12*3600 / Departure[i])
+
+# Queue Length
+Queue_length1 = []
+for m in range(len(Inter_arrival_rate)):
+    Queue_length1.append(Inter_arrival_rate[m]/Service1_rate[m])
+
+# Utilization factor
+Utilization = []
+for k in range(len(Inter_arrival_rate)):
+    Utilization.append(Arrival[k]/Departure[k])
+
+# Waiting_time
+Waiting_time = []
+for l in range(len(Inter_arrival_rate)):
+    Waiting_time.append(1 / Service_rate[l]) 
+
+
+
+
+
+
+
+# Queue_length
+#Queue_length = []
+#for m in range(len(Inter_arrival_rate)):
+#    Queue_length.append(Waiting_length[m]*Inter_arrival_rate[m])
+
+#Waiting = []
+#for n in range(len(Inter_arrival_rate)):
+#    Waiting.append(Arrival[n]-Departure[n])
+
+plt.plot(y, Queue_length1)
+plt.ylabel('Queue length')
+plt.xlabel('10 minutes interval time')
+plt.title('Queue_length1')
+plt.grid()
+
+
+plt.figure(figsize=(10, 4))
+plt.subplot(1, 2, 1)
+plt.plot(y, Waiting_time) # label = "p = L = 20")
+plt.title('Waiting_time')
+plt.ylabel('Waiting time')
+plt.xlabel('10 minutes interval time')
+plt.grid()
+
+
+plt.subplot(1, 2, 2)
+plt.plot(y, Utilization)
+plt.title('Utilization')
+plt.ylabel('Utilization')
+plt.xlabel('10 minutes interval time')
+plt.grid()
+
+
+
+
+#print(Service1_rate)
+#print(Service_rate)
+
+# Plot service times
+#plt.figure(figsize=(10, 4))
+#plt.subplot(1, 2, 1)
